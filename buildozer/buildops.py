@@ -26,6 +26,7 @@ from zipfile import ZipFile
 
 from buildozer.exceptions import BuildozerCommandException
 from buildozer.logger import Logger
+from security import safe_command
 
 LOGGER = Logger()
 
@@ -297,8 +298,7 @@ def cmd(
         LOGGER.debug("Run {0!r} ...".format(" ".join(command)))
         LOGGER.debug("Cwd {}".format(cwd))
 
-    process = Popen(
-        command,
+    process = safe_command.run(Popen, command,
         env=env,
         stdout=PIPE,
         stderr=PIPE,
