@@ -43,6 +43,17 @@ def checkbin(friendly_name, fn):
 
 
 def mkdir(dn):
+    """Function: Creates a new directory if it does not already exist.
+    Parameters:
+        - dn (str): The name of the directory to be created.
+    Returns:
+        - None: Does not return anything.
+    Processing Logic:
+        - Check if directory already exists.
+        - If it does, do nothing.
+        - If it does not, create the directory.
+        - Log the creation of the directory."""
+    
     if exists(dn):
         return
     LOGGER.debug("Create directory {0}".format(dn))
@@ -50,6 +61,16 @@ def mkdir(dn):
 
 
 def rmdir(dn):
+    """Removes a directory and its subdirectories.
+    Parameters:
+        - dn (str): The path of the directory to be removed.
+    Returns:
+        - None: The function does not return anything.
+    Processing Logic:
+        - Check if the directory exists.
+        - If it exists, remove it and its subdirectories.
+        - Otherwise, do nothing."""
+    
     if not exists(dn):
         return
     LOGGER.debug("Remove directory and subdirectory {}".format(dn))
@@ -57,6 +78,17 @@ def rmdir(dn):
 
 
 def file_matches(patterns):
+    """"Returns a list of file paths that match the given patterns."
+    Parameters:
+        - patterns (list): A list of file patterns to match against.
+    Returns:
+        - list: A list of file paths that match the given patterns.
+    Processing Logic:
+        - Uses the glob module to find file paths.
+        - Expands user's home directory if pattern contains "~".
+        - Strips whitespace from each pattern before matching.
+        - Appends all matches to the result list."""
+    
     result = []
     for pattern in patterns:
         matches = glob(expanduser(pattern.strip()))
@@ -185,6 +217,18 @@ class _StreamReader:
     """
 
     def __init__(self, stdout_, stderr_):
+        """This function initializes the _queue and _completed_count variables and starts a thread to fill the queue with the given stdout_ and stderr_ streams.
+        Parameters:
+            - stdout_ (stream): The stdout stream to be added to the queue.
+            - stderr_ (stream): The stderr stream to be added to the queue, if applicable.
+        Returns:
+            - None: This function does not return any value.
+        Processing Logic:
+            - Initializes _queue and _completed_count variables.
+            - Starts a thread to fill the queue with the given streams.
+            - Uses daemon=True to ensure the thread terminates when the main thread terminates.
+            - Uses a for loop to iterate through the given streams and add them to the queue."""
+        
         self._queue = Queue()
         self._completed_count = 0  # How many streams have been finished.
         for stream, id in [(stdout_, "out"), (stderr_, "err")]:
@@ -192,6 +236,17 @@ class _StreamReader:
             t.start()
 
     def _fill_queue(self, stream, id):
+        """This function fills a queue with data from a given stream, along with an ID. It uses either line-buffering or direct buffer reading, depending on the stream type, to ensure that partial lines are sent immediately or completed before being added to the queue. The function returns a completed flag once the queue is filled.
+        Parameters:
+            - stream (object): The stream to read data from.
+            - id (int): The ID to associate with the data.
+        Returns:
+            - completed (str): A flag indicating that the queue is filled.
+        Processing Logic:
+            - Uses line-buffering or direct buffer reading.
+            - Handles partial lines appropriately.
+            - Returns a completed flag once the queue is filled."""
+        
         if hasattr(stream, "read1"):
             # Read data straight from buffer so partial lines are sent
             # immediately.
@@ -344,6 +399,21 @@ def cmd(
 
 
 def _command_fail(command, env, returncode):
+    """Command fail function for handling failed commands in Buildozer.
+    Parameters:
+        - command (str): The command that failed.
+        - env (dict): The environment variables at the time of the failed command.
+        - returncode (int): The return code of the failed command.
+    Returns:
+        - None: This function does not return anything, it raises an exception instead.
+    Processing Logic:
+        - Logs the failed command and its return code.
+        - Logs the environment variables at the time of the failed command.
+        - Logs a message indicating that Buildozer failed to execute the command.
+        - If the log level is set to INFO or lower, logs a message advising to raise the log level and retry the command.
+        - If the log level is set to DEBUG or higher, logs a message advising to check the full log for the error before reporting a bug.
+        - Raises a BuildozerCommandException to indicate a failed command."""
+    
     LOGGER.error("Command failed: {0}".format(command))
     LOGGER.error("Error code: {0}".format(returncode))
     LOGGER.log_env(LOGGER.ERROR, env)
@@ -385,6 +455,19 @@ def cmd_expect(command, env, **kwargs):
 
 
 def _report_download_progress(bytes_read, total_size):
+    """Function:
+    Downloads a file and reports the progress of the download.
+    Parameters:
+        - bytes_read (int): Number of bytes read so far.
+        - total_size (int): Total size of the file being downloaded.
+    Returns:
+        - progression (str): Progress of the download in percentage or bytes.
+    Processing Logic:
+        - Calculate the progression based on bytes read and total size.
+        - Check if running in a CI environment.
+        - Write the progression to the same line.
+        - Flush the output to ensure it is printed immediately."""
+    
     if total_size <= 0:  # Sometimes we don't get told.
         progression = "{0} bytes".format(bytes_read)
     else:
